@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Kirill Sap</title>
+
+<!-- Telegram WebApp SDK — ОБЯЗАТЕЛЬНО первым скриптом -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#060608;
+  --bg2:#0d0d12;
+  --bg3:#12121a;
+  --bg4:#1a1a25;
+  --border:#ffffff0f;
+  --border2:#ffffff18;
+  --text:#f0f0f8;
+  --text2:#8888a8;
+  --text3:#44445a;
+  --accent:#6c63ff;
+  --accent2:#ff6584;
+  --green:#00e5a0;
+}
+
+/* Telegram тема — переопределяем цвета из TG если она светлая */
+body.tg-theme-light{
+  --bg:#f5f5f7;
+  --bg2:#ffffff;
+  --bg3:#f0f0f5;
+  --bg4:#e8e8f0;
+  --border:#00000010;
+  --border2:#00000020;
+  --text:#1c1c1e;
+  --text2:#636366;
+  --text3:#aeaeb2;
+}
+
+html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden}
+/* safe-area для нотча и навигации */
+body{
+  padding-bottom:calc(70px + env(safe-area-inset-bottom));
+  padding-top:env(safe-area-inset-top);
+}
+
+/* grain */
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.6}
+
+/* glow blobs */
+.blob1{position:fixed;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,#6c63ff22 0%,transparent 70%);top:-100px;right:-100px;pointer-events:none;z-index:0;animation:blobMove 8s ease-in-out infinite}
+.blob2{position:fixed;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,#ff658422 0%,transparent 70%);bottom:100px;left:-80px;pointer-events:none;z-index:0;animation:blobMove 10s ease-in-out infinite reverse}
+@keyframes blobMove{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,20px)}}
+
+.app{position:relative;z-index:1;max-width:420px;margin:0 auto;padding:0}
+
+/* SCREENS */
+.screen{display:none;animation:fadeUp .25s ease both}
+.screen.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* HERO */
+.hero{padding:28px 20px 24px;text-align:center;position:relative}
+.hero-initials{width:80px;height:80px;border-radius:24px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:32px;color:#fff;margin:0 auto 16px;letter-spacing:.05em;position:relative}
+.hero-initials::after{content:'';position:absolute;inset:-2px;border-radius:26px;background:linear-gradient(135deg,var(--accent),var(--accent2));z-index:-1;opacity:.4;filter:blur(8px)}
+.hero-name{font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:.04em;color:var(--text);line-height:1;margin-bottom:6px}
+.hero-role{font-size:14px;color:var(--text2);font-weight:300;letter-spacing:.02em;margin-bottom:16px}
+.hero-tags{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.tag{background:var(--bg3);border:.5px solid var(--border2);border-radius:20px;padding:5px 12px;font-size:12px;color:var(--text2)}
+.tag.accent{background:#6c63ff18;border-color:#6c63ff44;color:var(--accent)}
+
+/* SECTIONS */
+.section{padding:0 16px 20px}
+.sec-label{font-size:10px;font-weight:500;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;padding-left:2px}
+
+/* CARDS */
+.card{background:var(--bg2);border:.5px solid var(--border);border-radius:16px;padding:16px;margin-bottom:10px;transition:border-color .2s}
+.card:active{border-color:var(--border2)}
+
+/* SERVICES */
+.svc-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.svc-card{background:var(--bg2);border:.5px solid var(--border);border-radius:14px;padding:14px;transition:all .2s;cursor:pointer}
+.svc-card:hover{border-color:var(--accent);background:var(--bg3)}
+.svc-card:active{transform:scale(.97);border-color:var(--accent)}
+.svc-num{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent);line-height:1;margin-bottom:4px}
+.svc-name{font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px}
+.svc-desc{font-size:11px;color:var(--text3);line-height:1.5}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px}
+.stat{background:var(--bg2);border:.5px solid var(--border);border-radius:12px;padding:12px 8px;text-align:center}
+.stat-n{font-family:'Bebas Neue',sans-serif;font-size:24px;color:var(--text);letter-spacing:.02em}
+.stat-l{font-size:10px;color:var(--text3);margin-top:2px}
+
+/* SKILLS */
+.skill-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.skill-label{font-size:12px;color:var(--text2);width:100px;flex-shrink:0}
+.skill-bar-bg{flex:1;height:4px;background:var(--bg4);border-radius:10px;overflow:hidden}
+.skill-bar{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width 1s cubic-bezier(.4,0,.2,1)}
+.skill-pct{font-size:11px;color:var(--text3);width:30px;text-align:right}
+
+/* CONTACT */
+.contact-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:.5px solid var(--border);cursor:pointer;transition:opacity .15s}
+.contact-item:last-child{border:none}
+.contact-item:active{opacity:.7}
+.contact-icon{width:36px;height:36px;border-radius:10px;background:var(--bg3);border:.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.contact-label{font-size:13px;font-weight:500;color:var(--text)}
+.contact-val{font-size:12px;color:var(--text3);margin-top:1px}
+.contact-arrow{margin-left:auto;font-size:14px;color:var(--text3)}
+
+/* CTA */
+.cta{margin:0 16px 10px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:14px;padding:16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:opacity .15s,transform .15s}
+.cta:active{opacity:.85;transform:scale(.98)}
+.cta-text{font-size:15px;font-weight:500;color:#fff}
+.cta-sub{font-size:12px;color:rgba(255,255,255,.7);margin-top:2px}
+.cta-icon{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff}
+
+/* PROJECTS */
+.project-card{background:var(--bg2);border:.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:8px;cursor:pointer;transition:border-color .2s}
+.project-card:hover{border-color:var(--border2)}
+.project-card:active{border-color:var(--accent)}
+.project-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.project-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.project-name{font-size:14px;font-weight:500;color:var(--text)}
+.project-type{font-size:11px;color:var(--text3);margin-top:1px}
+.project-desc{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:8px}
+.project-tags{display:flex;gap:5px;flex-wrap:wrap}
+.ptag{background:var(--bg4);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--text3)}
+
+/* TESTIMONIALS */
+.review{background:var(--bg2);border:.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:8px}
+.review-stars{color:#f59e0b;font-size:13px;margin-bottom:6px;letter-spacing:2px}
+.review-text{font-size:13px;color:var(--text2);line-height:1.6;font-style:italic}
+.review-author{font-size:11px;color:var(--text3);margin-top:8px}
+
+/* NAV */
+.nav{
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--bg2);
+  border-top:.5px solid var(--border);
+  display:flex;justify-content:space-around;
+  padding:10px 0;
+  padding-bottom:calc(12px + env(safe-area-inset-bottom));
+  z-index:100;
+  max-width:420px;
+  margin:0 auto;
+  left:50%;transform:translateX(-50%);width:100%;
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+}
+.ni{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:var(--text3);cursor:pointer;padding:0 16px;transition:color .15s}
+.ni.active{color:var(--accent)}
+.ni svg{width:20px;height:20px}
+
+/* USER GREETING */
+.tg-greeting{
+  background:var(--bg3);
+  border:.5px solid var(--border2);
+  border-radius:12px;
+  padding:10px 14px;
+  margin:0 16px 16px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:13px;
+  color:var(--text2);
+}
+.tg-greeting span{color:var(--text);font-weight:500}
+
+/* AVAILABILITY */
+.avail{display:flex;align-items:center;gap:6px;background:var(--bg3);border:.5px solid #00e5a022;border-radius:20px;padding:6px 12px;width:fit-content;margin:0 auto 20px}
+.avail-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.avail-text{font-size:12px;color:var(--green)}
+
+/* BADGE */
+.new-badge{background:#6c63ff18;border:.5px solid #6c63ff44;color:var(--accent);font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500}
+
+/* DIVIDER */
+.divider{height:.5px;background:var(--border);margin:0 16px 20px}
+
+/* HAPTIC FEEDBACK визуальный отклик */
+.haptic-btn{-webkit-user-select:none;user-select:none}
+</style>
+</head>
+<body>
+<div class="blob1"></div>
+<div class="blob2"></div>
+
+<div class="app">
+
+<!-- ═══ HOME ═══ -->
+<div id="s-home" class="screen active">
+  <!-- Приветствие с именем из TG -->
+  <div id="tg-greeting-block" class="tg-greeting" style="display:none;margin-top:12px">
+    👋 Привет, <span id="tg-user-name"></span>!
+  </div>
+
+  <div class="hero">
+    <div class="hero-initials">KS</div>
+    <div class="hero-name">Kirill Sap</div>
+    <div class="hero-role">Mini App Developer · Vibe Coder · Automation</div>
+    <div class="avail"><div class="avail-dot"></div><div class="avail-text">Открыт к проектам</div></div>
+    <div class="hero-tags">
+      <span class="tag accent">Telegram Mini Apps</span>
+      <span class="tag">Вайбкодинг</span>
+      <span class="tag">Автоматизация</span>
+      <span class="tag">Под ключ</span>
+    </div>
+  </div>
+
+  <div class="stats-row" style="padding:0 16px;margin-bottom:20px">
+    <div class="stat"><div class="stat-n" style="color:var(--accent)">∞</div><div class="stat-l">Проектов</div></div>
+    <div class="stat"><div class="stat-n" style="color:var(--accent2)">24/7</div><div class="stat-l">Онлайн</div></div>
+    <div class="stat"><div class="stat-n" style="color:var(--green)">AI</div><div class="stat-l">Стек</div></div>
+  </div>
+
+  <div class="section">
+    <div class="sec-label">Что делаю</div>
+    <div class="svc-grid">
+      <div class="svc-card haptic-btn" onclick="haptic(); switchTab('services')">
+        <div class="svc-num">01</div>
+        <div class="svc-name">Mini Apps</div>
+        <div class="svc-desc">Полноценные приложения внутри Telegram</div>
+      </div>
+      <div class="svc-card haptic-btn" onclick="haptic(); switchTab('services')">
+        <div class="svc-num">02</div>
+        <div class="svc-name">Вайбкодинг</div>
+        <div class="svc-desc">Быстрая разработка с AI-инструментами</div>
+      </div>
+      <div class="svc-card haptic-btn" onclick="haptic(); switchTab('services')">
+        <div class="svc-num">03</div>
+        <div class="svc-name">Автоматизация</div>
+        <div class="svc-desc">Боты, пайплайны, процессы под ключ</div>
+      </div>
+      <div class="svc-card haptic-btn" onclick="haptic(); switchTab('contact')">
+        <div class="svc-num" style="color:var(--accent2)">→</div>
+        <div class="svc-name">Написать</div>
+        <div class="svc-desc">Обсудим твой проект прямо сейчас</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cta haptic-btn" onclick="haptic('medium'); openTg()">
+    <div><div class="cta-text">Обсудить проект</div><div class="cta-sub">@karimskii · отвечаю быстро</div></div>
+    <div class="cta-icon">→</div>
+  </div>
+</div>
+
+<!-- ═══ SERVICES ═══ -->
+<div id="s-services" class="screen">
+  <div style="padding:24px 16px 8px">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:.04em;color:var(--text)">Услуги</div>
+    <div style="font-size:13px;color:var(--text3);margin-top:2px">Разработка под ключ · быстро · качественно</div>
+  </div>
+
+  <div class="section">
+    <div class="project-card">
+      <div class="project-top">
+        <div class="project-icon" style="background:#6c63ff18">📱</div>
+        <div><div class="project-name">Telegram Mini App</div><div class="project-type">Полноценное приложение в Telegram</div></div>
+        <span class="new-badge">Хит</span>
+      </div>
+      <div class="project-desc">Разрабатываю Mini App любой сложности — от визитки до маркетплейса. HTML/CSS/JS + Python бэкенд. Подключение платежей, баз данных, AI.</div>
+      <div class="project-tags">
+        <span class="ptag">HTML/CSS/JS</span><span class="ptag">Python</span><span class="ptag">Telegram API</span><span class="ptag">Под ключ</span>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <div class="project-top">
+        <div class="project-icon" style="background:#ff658418">⚡</div>
+        <div><div class="project-name">Вайбкодинг</div><div class="project-type">Быстрая разработка с AI</div></div>
+      </div>
+      <div class="project-desc">Создаю продукты в разы быстрее стандартной разработки используя AI-инструменты. Идея → рабочий прототип за 1-3 дня.</div>
+      <div class="project-tags">
+        <span class="ptag">Claude AI</span><span class="ptag">ChatGPT</span><span class="ptag">Cursor</span><span class="ptag">Быстро</span>
+      </div>
+    </div>
+
+    <div class="project-card">
+      <div class="project-top">
+        <div class="project-icon" style="background:#00e5a018">🤖</div>
+        <div><div class="project-name">Автоматизация</div><div class="project-type">Боты и процессы под ключ</div></div>
+      </div>
+      <div class="project-desc">Telegram боты для бизнеса, автоматизация рутины, интеграции с CRM и внешними сервисами. Make, n8n, Python.</div>
+      <div class="project-tags">
+        <span class="ptag">Telegram Bot</span><span class="ptag">Make.com</span><span class="ptag">n8n</span><span class="ptag">API</span>
+      </div>
+    </div>
+
+    <div class="review">
+      <div class="review-stars">★★★★★</div>
+      <div class="review-text">«Кирилл сделал Mini App для нашего салона за 3 дня. Всё работает идеально, клиенты записываются прямо в Telegram.»</div>
+      <div class="review-author">— Ирина, nail салон «Nails by Ira»</div>
+    </div>
+
+    <div class="review">
+      <div class="review-stars">★★★★★</div>
+      <div class="review-text">«Быстро, качественно, без лишних слов. Бот для рассылок работает уже 3 месяца без единой ошибки.»</div>
+      <div class="review-author">— Максим, онлайн-школа</div>
+    </div>
+  </div>
+
+  <div class="cta haptic-btn" onclick="haptic('medium'); openTg()">
+    <div><div class="cta-text">Заказать проект</div><div class="cta-sub">Бесплатная консультация</div></div>
+    <div class="cta-icon">→</div>
+  </div>
+</div>
+
+<!-- ═══ PORTFOLIO ═══ -->
+<div id="s-portfolio" class="screen">
+  <div style="padding:24px 16px 8px">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:.04em;color:var(--text)">Портфолио</div>
+    <div style="font-size:13px;color:var(--text3);margin-top:2px">Последние проекты</div>
+  </div>
+
+  <div class="section">
+    <div class="project-card">
+      <div class="project-top">
+        <div class="project-icon" style="background:#ec489918">💅</div>
+        <div><div class="project-name">Nail Salon Bot</div><div class="project-type">Telegram Bot + Mini App</div></div>
+      </div>
+      <div class="project-desc">Бот для ногтевого салона — онлайн-запись, управление слотами, программа лояльности, рассылки, база клиентов.</div>
+      <div class="project-tags"><span class="ptag">Python</span><span class="ptag">Mini App</span><span class="ptag">Railway</span></div>
+    </div>
+
+    <div class="project-card">
+      <div class="project-top">
+        <div class="project-icon" style="background:#6c63ff18">💰</div>
+        <div><div class="project-name">Money Discipline Bot</div><div class="project-type">Telegram Bot</div></div>
+      </div>
+      <div class="project-desc">Бот для финансовой дисциплины — streak система, бейджи, лидерборд, AI-коуч, реферальная программа.</div>
+      <div class="project-tags"><span class="ptag">Python</span><span class="ptag">OpenAI</span><span class="ptag">Gamification</span></div>
+    </div>
+
+    <div class="project-card">
+      <div class="project-top">
+        <div class="project-icon" style="background:#00e5a018">🏪</div>
+        <div><div class="project-name">Business Mini App</div><div class="project-type">Демо-витрина</div></div>
+      </div>
+      <div class="project-desc">Универсальный шаблон Mini App для бизнеса — запись, оплата, профиль, аналитика, уведомления.</div>
+      <div class="project-tags"><span class="ptag">HTML/CSS/JS</span><span class="ptag">Telegram API</span><span class="ptag">Stars</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CONTACT ═══ -->
+<div id="s-contact" class="screen">
+  <div style="padding:24px 16px 8px">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:.04em;color:var(--text)">Контакты</div>
+    <div style="font-size:13px;color:var(--text3);margin-top:2px">Всегда на связи</div>
+  </div>
+
+  <div class="section">
+    <div class="avail" style="margin:0 0 16px"><div class="avail-dot"></div><div class="avail-text">Открыт к новым проектам</div></div>
+
+    <div class="card">
+      <div class="contact-item haptic-btn" onclick="haptic(); openTg()">
+        <div class="contact-icon" style="background:#229ed918;border-color:#229ed944">✈️</div>
+        <div><div class="contact-label">Telegram</div><div class="contact-val">@karimskii</div></div>
+        <div class="contact-arrow">→</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:10px">
+      <div style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:12px">Разрабатываю Telegram Mini Apps и боты под ключ. Если у тебя есть идея — напиши, обсудим и реализуем быстро и качественно.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <div class="tag accent">Быстрый ответ</div>
+        <div class="tag">Бесплатная консультация</div>
+        <div class="tag">Пишу на русском</div>
+      </div>
+    </div>
+
+    <div class="sec-label" style="margin-top:8px">Стек и инструменты</div>
+    <div class="card">
+      <div class="skill-row"><span class="skill-label">Mini Apps</span><div class="skill-bar-bg"><div class="skill-bar" data-width="95%" style="width:0%"></div></div><span class="skill-pct">95%</span></div>
+      <div class="skill-row"><span class="skill-label">Python Bots</span><div class="skill-bar-bg"><div class="skill-bar" data-width="90%" style="width:0%"></div></div><span class="skill-pct">90%</span></div>
+      <div class="skill-row"><span class="skill-label">Автоматизация</span><div class="skill-bar-bg"><div class="skill-bar" data-width="85%" style="width:0%"></div></div><span class="skill-pct">85%</span></div>
+      <div class="skill-row" style="margin-bottom:0"><span class="skill-label">AI интеграции</span><div class="skill-bar-bg"><div class="skill-bar" data-width="88%" style="width:0%"></div></div><span class="skill-pct">88%</span></div>
+    </div>
+  </div>
+
+  <div class="cta haptic-btn" onclick="haptic('medium'); openTg()">
+    <div><div class="cta-text">Написать в Telegram</div><div class="cta-sub">@karimskii · отвечаю быстро</div></div>
+    <div class="cta-icon">✈️</div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="ni active haptic-btn" id="nav-home" onclick="haptic('light'); switchTab('home')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Главная
+  </div>
+  <div class="ni haptic-btn" id="nav-services" onclick="haptic('light'); switchTab('services')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+    Услуги
+  </div>
+  <div class="ni haptic-btn" id="nav-portfolio" onclick="haptic('light'); switchTab('portfolio')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+    Проекты
+  </div>
+  <div class="ni haptic-btn" id="nav-contact" onclick="haptic('light'); switchTab('contact')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+    Контакты
+  </div>
+</nav>
+</div>
+
+<script>
+// ═══ TELEGRAM WEBAPP INIT ═══
+const tg = window.Telegram?.WebApp;
+
+if (tg) {
+  // Обязательные вызовы
+  tg.ready();
+  tg.expand(); // Разворачиваем на весь экран
+
+  // Цветовая тема из Telegram
+  if (tg.colorScheme === 'light') {
+    document.body.classList.add('tg-theme-light');
+  }
+
+  // Отображаем имя пользователя если доступно
+  const user = tg.initDataUnsafe?.user;
+  if (user) {
+    const name = user.first_name || user.username || '';
+    if (name) {
+      document.getElementById('tg-user-name').textContent = name;
+      document.getElementById('tg-greeting-block').style.display = 'flex';
+    }
+  }
+
+  // BackButton — кнопка "Назад" в шапке Telegram
+  let currentTab = 'home';
+  tg.BackButton.onClick(() => {
+    if (currentTab !== 'home') {
+      switchTab('home');
+    } else {
+      tg.close();
+    }
+  });
+
+  // MainButton — большая кнопка внизу (опционально, показываем на главной)
+  // tg.MainButton.setText('Написать Кириллу');
+  // tg.MainButton.show();
+  // tg.MainButton.onClick(() => openTg());
+}
+
+// ═══ HAPTIC FEEDBACK ═══
+function haptic(style = 'light') {
+  try {
+    tg?.HapticFeedback?.impactOccurred(style);
+  } catch(e) {}
+}
+
+// ═══ TAB SWITCH ═══
+function switchTab(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n => n.classList.remove('active'));
+  document.getElementById('s-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+
+  // Управляем BackButton
+  if (tg) {
+    if (name === 'home') {
+      tg.BackButton.hide();
+    } else {
+      tg.BackButton.show();
+    }
+  }
+
+  // Анимируем skill bars при переходе на контакты
+  if (name === 'contact') {
+    setTimeout(() => {
+      document.querySelectorAll('.skill-bar').forEach(bar => {
+        bar.style.width = bar.dataset.width;
+      });
+    }, 100);
+  } else {
+    document.querySelectorAll('.skill-bar').forEach(bar => {
+      bar.style.width = '0%';
+    });
+  }
+}
+
+// ═══ OPEN TELEGRAM ═══
+function openTg() {
+  // В Mini App используем tg.openTelegramLink для открытия внутри TG
+  if (tg) {
+    tg.openTelegramLink('https://t.me/karimskii');
+  } else {
+    window.open('https://t.me/karimskii', '_blank');
+  }
+}
+</script>
+</body>
+</html>
